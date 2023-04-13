@@ -1,5 +1,5 @@
 DEBUG = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
-host = "ws://3.85.104.149:42742";
+host = "ws://18.215.177.114:42742";
 
 if(DEBUG){
   console.log("In debug");
@@ -7,18 +7,28 @@ if(DEBUG){
 }
 
 function processServerMessage(msgObj){
+  console.log(msgObj);
   switch(msgObj.command){
     case "RequestSkyAspectResponse":
       console.log("Server:RequestSkyAspectResponse");
       onReceiveSkyAspect(msgObj.skyAspect);
+      break;
+    case "ConnectionSuccess":
+      console.log("Server:ConnectionSuccess");
+      onConnectionSuccess(msgObj.playerNum);
+      break;
+    case "ConnectionFailed":
+      console.log("Server:ConnectionFailed");
+      onConnectionFailed();
       break;
     default:
       console.log(`Designer: Unknown command = ${msg}`);
   }
 };
 
-
+console.log("Making a new connection!!!");
 let socket = new WebSocket(host);
+
 
 function alert(msg){
   console.log(msg);
@@ -97,6 +107,40 @@ function sendFirework(shape, color){
 
   socket.send(JSON.stringify(msg));
 };*/
+
+// state = 1 means clicked, state = -1 means released
+function sendCircleButtonClick(id, state){
+  msg = {
+    source: "Player",
+    command: "CircleButtonClick",
+    circleButtonID: id,
+    circleButtonState: state
+  };
+
+  socket.send(JSON.stringify(msg));
+}
+
+// clickUpdate: 1 = click started, 0 = no change, -1 = click ended
+function sendTouchPositionData(touchState, posX, posY){
+  msg = {
+    source: "Player",
+    command: "SendTouchPositionData",
+    touchState: touchState,
+    touchPosX: posX,
+    touchPosY: posY
+  };
+
+  socket.send(JSON.stringify(msg));
+}
+
+function requestPlayerSpot(){
+  msg = {
+    source: "Player",
+    command: "RequestPlayerSpot"
+  };
+
+  socket.send(JSON.stringify(msg));
+}
 
 function sendRequestSkyAspect(){
   msg = {

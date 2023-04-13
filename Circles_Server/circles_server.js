@@ -1,5 +1,5 @@
-activeSky = null;
-activeSkyAspect = -1;
+activeGame = null;
+activeGameAspect = -1;
 
 player1 = null;
 player2 = null;
@@ -14,17 +14,17 @@ function sendRequestSkyDimensionsResponse(PlayerWs){
   msgObj = {
     source: "Server",
     command: "RequestSkyAspectResponse",
-    skyAspect: activeSkyAspect
+    skyAspect: activeGameAspect
   };
 
   DesignerWs.send(JSON.stringify(msgObj));
 };
 
 function deliverFirework(msgObj){
-  if(activeSky != null){
+  if(activeGame != null){
     msgObj.source = "Server";
     msgObj.command = "DeliverFirework";
-    activeSky.send(JSON.stringify(msgObj));
+    activeGame.send(JSON.stringify(msgObj));
   }else{
     console.log("ERROR - No active sky");
   }
@@ -32,9 +32,64 @@ function deliverFirework(msgObj){
 
 // ------------------  MESSAGE PROCESSING  -----------------------------
 
-function processPlayerMessage(msgObj, PlayerWs){
+function respondToNewPlayerConnected(playerWs, playerNum){
+  // Response to game
+  msgObj = {
+    source: "Server",
+    command: "PlayerInputData",
+    newPlayerConnected: playerNum
+  };
+  activeGame.send(JSON.stringify(msgObj));
+
+  // Response to player
+  msgObj = {
+    source: "Server",
+    command: "ConnectionSuccess",
+    playerNum: playerNum
+  };
+  playerWs.send(JSON.stringify(msgObj));
+}
+
+function respondToPlayerConnectionFailed(playerWs){
+  msgObj = {
+    source: "Server",
+    command: "ConnectionFailed",
+  };
+  playerWs.send(JSON.stringify(msgObj));
+}
+
+function processPlayerMessage(msgObj, playerWs){
   switch(msgObj.command){
-    
+    case "RequestPlayerSpot":
+      console.log("Player:RequestPlayerSpot");
+      if(activeGame == null){
+        console.log("No active game. Dropping connection");
+        respondToPlayerConnectionFailed(playerWs);
+      }else{
+        if(player1 == null){
+          console.log("Found our player 1");
+          player1 = playerWs;
+          respondToNewPlayerConnected(playerWs, 1);
+        }else if(player2 == null){
+          console.log("Found our player 2");
+          player2 = playerWs;
+          respondToNewPlayerConnected(playerWs, 2);
+        }else{
+          console.log("No open player spots. Dropping connection");
+          respondToPlayerConnectionFailed(playerWs);
+        }
+      }
+      break;
+    case "CircleButtonClick":
+      console.log("Player:CircleButtonClick");
+      msgObj.source = "Server";
+      activeGame.send(JSON.stringify(msgObj));
+      break;
+    case "SendTouchPositionData":
+      console.log("Player:SendTouchPositionData");
+      msgObj.source = "Server";
+      activeGame.send(JSON.stringify(msgObj));
+      break;
 
     /*
     case "RequestSkyAspect":
@@ -50,16 +105,19 @@ function processPlayerMessage(msgObj, PlayerWs){
   }
 }
 
-function processGameMessage(msgObj, GameWs){
+function processGameMessage(msgObj, gameWs){
   switch(msgObj.command){
-    case "StartNewGame":
-      console.log("Game:StartNewGame");
+    case "OpenNewGame":
+      console.log("Game:OpenNewGame");
+      activeGame = gameWs;
+      player1 = null;
+      player2 = null;
       break;
     /*
     case "OpenNewSky":
       console.log("Sky:OpenNewSky")
-      activeSky = SkyWs;
-      activeSkyAspect = msgObj.skyAspect;
+      activeGame = SkyWs;
+      activeGameAspect = msgObj.skyAspect;
       break;
     case "PantsOptional":
       console.log("Sky:PantsOptional");
