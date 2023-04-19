@@ -5,13 +5,21 @@ function CircleButton(posX, posY, diameter, id, onClickCallback){
     this.id = id;
     this.onClickCallback = onClickCallback;
     this.isPressedIn = false;
-
+    this.circleHasBeenActivated = false;
 
     this.draw = function(){
-        if(this.isPressedIn){
-            fill(255, 0, 0);
+        if(this.circleHasBeenActivated){
+            if(this.isPressedIn){
+                fill(0, 255, 0);
+            }else{
+                fill(100, 255, 100);
+            }
         }else{
-            fill(255);
+            if(this.isPressedIn){
+                fill(255, 0, 0);
+            }else{
+                fill(255, 100, 100);
+            }
         }
         
         circle(posX, posY, diameter);
@@ -28,7 +36,12 @@ function CircleButton(posX, posY, diameter, id, onClickCallback){
     this.otherCircleSelected = function(otherId){
         if(id != otherId){
             this.isPressedIn = false;
+            onClickCallback(this.id, -1);
         }
+    }
+
+    this.wasJustActivated = function(){
+        this.circleHasBeenActivated = true;
     }
 
 }

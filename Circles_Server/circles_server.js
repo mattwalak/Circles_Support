@@ -113,6 +113,11 @@ function processGameMessage(msgObj, gameWs){
       player1 = null;
       player2 = null;
       break;
+    case "SendCircleButtonUpdateFromGame":
+      console.log("Game:SendCircleButtonUpdateFromGame");
+      msgObj.source = "Server";
+      player2.send(JSON.stringify(msgObj));
+      break;
     /*
     case "OpenNewSky":
       console.log("Sky:OpenNewSky")

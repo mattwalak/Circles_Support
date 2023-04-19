@@ -3,9 +3,16 @@ let NUM_CIRCLES = 20;
 let connectToServerButton;
 let font;
 let playerNum = -1;
+let impulseModeProgressionCount = 0; // [0, 20]
 
 let mainRingDiameter;
 let circleButtons = [];
+
+let lastClickActionTime = -1;
+let lastClickDelayTime = -1;
+let maxDelayTimeSec = 1;
+let minDelayTimeSec = 0.1;
+
 
 // 0 = connect to server button
 // 1 = awaiting server response
@@ -58,11 +65,26 @@ function draw(){
 		textSize(16);
 		text("connection failed\nreload to try again", width/2, height/2);
 	}else if(menuState == 3){
-		fill(255);
 		if(playerNum == 1){
+			fill(255);
 			circle(width/2, height/2, mainRingDiameter);
+
+			circle_interp = (millis() - lastClickActionTime) / lastClickDelayTime;
+  			circle_interp = constrain(circle_interp, 0, 1);
+  
+  			fill(255, 127, 127);
+  			noStroke();
+			if(circle_interp > 0 && circle_interp < 1){
+				arc(width/2, height/2, 
+					mainRingDiameter, mainRingDiameter, 
+					-PI/2, -PI/2 + (2*PI*circle_interp));
+			}
+  			
+
+
 		}else if(playerNum == 2){
 			for(let i = 0; i < circleButtons.length; i++){
+				fill(255);
 				circleButtons[i].draw();
 			}
 		}
@@ -88,9 +110,6 @@ function circleButtonCallback(id, stateChange){
 		sendCircleButtonClick(id, stateChange);
 	}
 
-	
-
-	
 }
 
 function onConnectionSuccess(playerNumIn){
@@ -230,6 +249,11 @@ function calculateAndSendTouchPositionData(clickState){
 
 function touchStarted(){
 	if(playerNum == 1){
+		lastClickActionTime = millis();
+		lastClickDelayTime = 
+			lerp(maxDelayTimeSec, 
+				minDelayTimeSec, 
+				impulseModeProgressionCount / NUM_CIRCLES) * 1000;
 		calculateAndSendTouchPositionData(1);
 	}else if(playerNum == 2){
 		for(let i = 0; i < circleButtons.length; i++){

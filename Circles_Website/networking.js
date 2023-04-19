@@ -21,6 +21,11 @@ function processServerMessage(msgObj){
       console.log("Server:ConnectionFailed");
       onConnectionFailed();
       break;
+    case "SendCircleButtonUpdateFromGame":
+      console.log("Server:SendCircleButtonUpdateFromGame");
+      circleButtons[msgObj.circleButtonID].wasJustActivated();
+      impulseModeProgressionCount++;
+      break;
     default:
       console.log(`Designer: Unknown command = ${msg}`);
   }
@@ -108,7 +113,7 @@ function sendFirework(shape, color){
   socket.send(JSON.stringify(msg));
 };*/
 
-// state = 1 means clicked, state = -1 means released
+// state = 1 means clicked, state = -1 means released, state = 2 means just activated
 function sendCircleButtonClick(id, state){
   msg = {
     source: "Player",
