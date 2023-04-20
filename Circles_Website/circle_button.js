@@ -6,23 +6,40 @@ function CircleButton(posX, posY, diameter, id, onClickCallback){
     this.onClickCallback = onClickCallback;
     this.isPressedIn = false;
     this.circleHasBeenActivated = false;
+    this.enabled = true;
+
+    this.strokeColor = color(255);
+    this.disabledColor = color(160);
+    this.activeSelectedColor = color(0, 255, 0);
+    this.activeNotSelectedColor = color(160, 255, 160);
+    this.inactiveSelectedColor = color(255, 0, 0);
+    this.inactiveNotSelectedColor = color(255, 160, 160);
 
     this.draw = function(){
-        if(this.circleHasBeenActivated){
-            if(this.isPressedIn){
-                fill(0, 255, 0);
+        if(this.enabled){
+            if(this.circleHasBeenActivated){
+                if(this.isPressedIn){
+                    strokeWeight(4);
+                    stroke(this.strokeColor);
+                    fill(this.activeSelectedColor);
+                }else{
+                    fill(this.activeNotSelectedColor);
+                }
             }else{
-                fill(100, 255, 100);
+                if(this.isPressedIn){
+                    strokeWeight(4);
+                    stroke(this.strokeColor);
+                    fill(this.inactiveSelectedColor);
+                }else{
+                    fill(this.inactiveNotSelectedColor);
+                }
             }
         }else{
-            if(this.isPressedIn){
-                fill(255, 0, 0);
-            }else{
-                fill(255, 100, 100);
-            }
+            fill(this.disabledColor);
         }
-        
+
         circle(posX, posY, diameter);
+        noStroke();
     }
 
     this.checkClick = function(){

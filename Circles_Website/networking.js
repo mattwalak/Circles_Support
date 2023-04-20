@@ -23,9 +23,25 @@ function processServerMessage(msgObj){
       break;
     case "SendCircleButtonUpdateFromGame":
       console.log("Server:SendCircleButtonUpdateFromGame");
-      circleButtons[msgObj.circleButtonID].wasJustActivated();
+      if(playerNum == 2){
+        circleButtons[msgObj.circleButtonID].wasJustActivated();
+      }
+      
       impulseModeProgressionCount++;
       break;
+    case "SceneChange":
+      console.log("Server:SceneChange");
+      if(msgObj.changeSceneTo == 1){
+        onTransitionToRhythmMode();
+      }else{
+        console.log("ERROR - Attempting to transition to an unknown scene");
+      }
+      break;
+    case "Player2SentKeyChange":
+      console.log("Server:Player2SentKeyChange");
+      if(playerNum == 1){
+        // player 1 response to key change
+      }
     default:
       console.log(`Designer: Unknown command = ${msg}`);
   }
@@ -121,6 +137,16 @@ function sendCircleButtonClick(id, state){
     circleButtonID: id,
     circleButtonState: state
   };
+
+  socket.send(JSON.stringify(msg));
+}
+
+function sendKeyChange(key){
+  msg = {
+    source: "Player",
+    command: "SendKeyChange",
+    newKey: key
+  }
 
   socket.send(JSON.stringify(msg));
 }

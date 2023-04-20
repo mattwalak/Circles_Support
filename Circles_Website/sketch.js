@@ -2,11 +2,13 @@ let NUM_CIRCLES = 20;
 
 let connectToServerButton;
 let font;
-let playerNum = -1;
+let playerNum = -1; // 1 = big circle, 2 = ring of buttons
 let impulseModeProgressionCount = 0; // [0, 20]
 
 let mainRingDiameter;
+let smallerRingDiameter;
 let circleButtons = [];
+let keyButtons = [];
 
 let lastClickActionTime = -1;
 let lastClickDelayTime = -1;
@@ -34,6 +36,7 @@ function setup(){
 	background(0);
 
 	mainRingDiameter = width * 5/6;
+	smallerRingDiameter = width * 1/2;
 
 	// Connect to server button
 	connectToServerButton = new Button({
@@ -87,6 +90,13 @@ function draw(){
 				fill(255);
 				circleButtons[i].draw();
 			}
+
+			if(gameState == 1){
+				for(let i = 0; i < keyButtons.length; i++){
+					fill(255);
+					keyButtons[i].draw();
+				}
+			}
 		}
 
 		/*
@@ -109,7 +119,18 @@ function circleButtonCallback(id, stateChange){
 		// Send network signal
 		sendCircleButtonClick(id, stateChange);
 	}
+}
 
+function keyButtonCallback(id, stateChange){
+	if(stateChange == 1){
+		// Send toggle signal
+		for(let i = 0; i < keyButtons.length; i++){
+			keyButtons[i].otherCircleSelected(id);
+		}
+		
+		// Send network signal
+		sendKeyChange(id);
+	}
 }
 
 function onConnectionSuccess(playerNumIn){
@@ -140,6 +161,81 @@ function onConnectionSuccess(playerNumIn){
 function onConnectionFailed(){
 	menuState = 2;
 }
+
+function onTransitionToRhythmMode(){
+	if(playerNum == 2){
+		var NUM_KEYS = 12;
+		for(let i = 0; i < NUM_KEYS; i++){
+			let rad = (2 * Math.PI) - (i * (2 * Math.PI / NUM_KEYS));
+			let xPos = Math.cos(rad) * smallerRingDiameter / 2;
+			let yPos = Math.sin(rad) * smallerRingDiameter / 2;
+			keyButtons.push(
+				new CircleButton(
+					(width/2) + xPos, 
+					(height/2) + yPos, 
+					width/15, 
+					i, 
+					keyButtonCallback
+				)
+			);
+		}
+
+		keyButtons[0].isPressedIn = true;
+	}
+
+	gameState = 1;
+}
+
+function calculateAndSendTouchPositionData(clickState){
+	var normX = mouseX - (width/2);
+	normX = normX / (mainRingDiameter/2);
+	var normY = mouseY - (height/2);
+	normY = normY / (mainRingDiameter/2);
+	sendTouchPositionData(clickState, normX, -normY);
+}
+
+function touchStarted(){
+	if(playerNum == 1){
+		if(millis() > (lastClickActionTime + lastClickDelayTime)){
+			lastClickActionTime = millis();
+			lastClickDelayTime = 
+				lerp(maxDelayTimeSec, 
+					minDelayTimeSec, 
+					impulseModeProgressionCount / NUM_CIRCLES) * 1000;
+					console.log("impulseModeProgressionCount = " + impulseModeProgressionCount);
+					console.log("progression frac = " + impulseModeProgressionCount / NUM_CIRCLES);
+			calculateAndSendTouchPositionData(1);
+		}
+	}else if(playerNum == 2){
+		for(let i = 0; i < circleButtons.length; i++){
+			circleButtons[i].checkClick();
+		}
+
+		if(gameState == 1){
+			for(let i = 0; i < keyButtons.length; i++){
+				keyButtons[i].checkClick();
+			}
+		}
+	}
+
+  	return false;
+}
+
+function touchMoved(){
+	if(playerNum == 1){
+		calculateAndSendTouchPositionData(0);
+	}
+  	return false;
+}
+
+function touchEnded(){
+	if(playerNum == 1){
+		calculateAndSendTouchPositionData(-1);
+	}
+
+  	return false;
+}
+
 
 /*
 let typeSelectScene, customizationScene, launchScene;
@@ -238,43 +334,3 @@ function navigateToScene(targetScene){
 
 // prevents the mobile browser from processing some default touch events, 
 // like swiping left for "back" or scrolling the page.
-
-function calculateAndSendTouchPositionData(clickState){
-	var normX = mouseX - (width/2);
-	normX = normX / (mainRingDiameter/2);
-	var normY = mouseY - (height/2);
-	normY = normY / (mainRingDiameter/2);
-	sendTouchPositionData(clickState, normX, -normY);
-}
-
-function touchStarted(){
-	if(playerNum == 1){
-		lastClickActionTime = millis();
-		lastClickDelayTime = 
-			lerp(maxDelayTimeSec, 
-				minDelayTimeSec, 
-				impulseModeProgressionCount / NUM_CIRCLES) * 1000;
-		calculateAndSendTouchPositionData(1);
-	}else if(playerNum == 2){
-		for(let i = 0; i < circleButtons.length; i++){
-			circleButtons[i].checkClick();
-		}
-	}
-
-  	return false;
-}
-
-function touchMoved(){
-	if(playerNum == 1){
-		calculateAndSendTouchPositionData(0);
-	}
-  	return false;
-}
-
-function touchEnded(){
-	if(playerNum == 1){
-		calculateAndSendTouchPositionData(-1);
-	}
-
-  	return false;
-}

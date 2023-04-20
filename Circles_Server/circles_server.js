@@ -90,6 +90,17 @@ function processPlayerMessage(msgObj, playerWs){
       msgObj.source = "Server";
       activeGame.send(JSON.stringify(msgObj));
       break;
+    case "SendKeyChange":
+      console.log("Player:SendKeyChange");
+      msgObj.source = "Server";
+      activeGame.send(JSON.stringify(msgObj));
+      p1Message = {
+        source: "Server",
+        command: "Player2SentKeyChange",
+        newKey: msgObj.newKey
+      };
+      player1.send(JSON.stringify(p1Message));
+      break;
 
     /*
     case "RequestSkyAspect":
@@ -117,6 +128,13 @@ function processGameMessage(msgObj, gameWs){
       console.log("Game:SendCircleButtonUpdateFromGame");
       msgObj.source = "Server";
       player2.send(JSON.stringify(msgObj));
+      player1.send(JSON.stringify(msgObj));
+      break;
+    case "SceneChange":
+      console.log("Game:SceneChange");
+      msgObj.source = "Server";
+      player2.send(JSON.stringify(msgObj));
+      player1.send(JSON.stringify(msgObj));
       break;
     /*
     case "OpenNewSky":
@@ -172,6 +190,7 @@ function onConnect(ws) {
       }
     }catch(e){
       console.log(`Can't parse message: ${message}`);
+      console.error(e);
     }
   });
 }
